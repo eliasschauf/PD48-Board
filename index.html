@@ -4,330 +4,252 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PD48V Labornetzteil</title>
-<meta name="description" content="PD48V: 240-W-Labornetzteil, das seine Energie aus einem USB-C-Ladegerät zieht. Projektseite und Firmware-Flasher.">
-<!-- Project page + firmware flasher (ESP Web Tools, Web Serial). Served by GitHub Pages.
+<meta name="description" content="PD48V: Labornetzteil mit 240 W, versorgt aus einem USB-C-Ladegerät. Bald auf Kickstarter.">
+<!-- Product page + firmware flasher (ESP Web Tools, Web Serial), served by GitHub Pages.
      Firmware parts and offsets: manifest-*.json, files in fw/. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;500&display=swap">
 <script type="module" src="https://unpkg.com/esp-web-tools@10.1.0/dist/web/install-button.js?module"></script>
 <style>
-/* layout: instrument front panel. Hero photo, a readout strip in the display's own
-   colours (green = volts, amber = amps, pink = watts), then sections in one column */
+/* layout: product page. Photos carry the page; text stays short; one accent,
+   the orange of the case, used only for links and the flash buttons */
 :root{
-  --bg:#f2f4f3; --panel:#ffffff; --fg:#121b17; --muted:#56645d; --line:#d5ddd9;
-  --volt:#0a8f63; --amp:#b07400; --watt:#c2347a; --accent:#0a8f63; --accent-fg:#ffffff; --chip:#e5ede9;
-  --screen:#0b0f14; --screen-fg:#e8eefc;
-  --f-display:"Chakra Petch",system-ui,sans-serif;
-  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --bg:#ffffff; --alt:#f4f4f2; --fg:#151515; --muted:#6b6b68; --line:#e2e2de; --accent:#b8400f; --on-accent:#ffffff;
+  --f-head:"Archivo",system-ui,sans-serif; --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme: dark){:root{
-  --bg:#0b100e; --panel:#121a17; --fg:#e3ece7; --muted:#92a39a; --line:#24312c;
-  --volt:#2ee6a8; --amp:#ffc24c; --watt:#ff5fa8; --accent:#2ee6a8; --accent-fg:#04110b; --chip:#1a2622;
-  color-scheme:dark}}
+  --bg:#111111; --alt:#1a1a1a; --fg:#efefec; --muted:#9a9a95; --line:#2b2b29; --accent:#ff7a3d; --on-accent:#140700; color-scheme:dark}}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 var(--f-body)}
-.wrap{max-width:1080px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
-a{color:inherit}
-img{max-width:100%;display:block}
-h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
-h2{font-size:clamp(26px,4vw,34px);line-height:1.15;font-weight:700}
-h3{font-size:18px;font-weight:500}
-p{margin:0;max-width:65ch}
-.mono{font-family:var(--f-mono)}
-.eyebrow{font:600 12px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-section{padding-block:56px}
-section+section{border-top:1px solid var(--line)}
-.sec-head{display:grid;gap:10px;margin-bottom:28px}
-.sec-head p{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 var(--f-body)}
+img{display:block;max-width:100%;height:auto}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.w{max-width:1120px;margin:0 auto;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.narrow{max-width:720px}
+h1,h2{font-family:var(--f-head);font-weight:800;letter-spacing:-.02em;text-wrap:balance;margin:0}
+h2{font-size:clamp(28px,4.2vw,44px);line-height:1.08}
+p{margin:0}
 
-/* nav */
-nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line)}
-nav .wrap{display:flex;align-items:center;gap:20px;min-height:56px;flex-wrap:wrap}
-nav .brand{font:700 18px var(--f-display);text-decoration:none;margin-right:auto}
-nav .brand span{color:var(--volt)}
-nav a.nl{font-size:14px;color:var(--muted);text-decoration:none}
-nav a.nl:hover{color:var(--fg)}
+header{border-bottom:1px solid var(--line)}
+header .w{display:flex;align-items:center;gap:28px;min-height:60px}
+.mark{font:800 20px var(--f-head);color:var(--fg);letter-spacing:-.01em;margin-right:auto}
+.mark:hover{text-decoration:none}
+header nav{display:flex;gap:24px;font-size:15px}
+header nav a{color:var(--muted)}
+header nav a:hover{color:var(--fg);text-decoration:none}
 
-/* hero */
-.hero{padding-block:48px 40px;display:grid;gap:32px}
-.hero-top{display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:center}
-.hero h1{font-size:clamp(46px,8vw,84px);line-height:.95;letter-spacing:-.02em}
-.hero h1 b{color:var(--volt);font-weight:700}
-.hero .lead{font-size:19px;color:var(--muted);margin-top:16px}
-.ks{display:inline-flex;align-items:center;gap:10px;margin-top:22px;padding:8px 14px;border-radius:999px;
-  border:1px solid var(--line);background:var(--panel);font:600 13px var(--f-mono);letter-spacing:.04em}
-.ks i{width:9px;height:9px;border-radius:50%;background:var(--amp);box-shadow:0 0 0 4px color-mix(in srgb,var(--amp) 25%,transparent)}
-.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
-.btn{display:inline-block;font:600 15px var(--f-body);text-decoration:none;border-radius:10px;padding:11px 20px;border:1px solid var(--line);
-  background:var(--panel);color:var(--fg);cursor:pointer}
-.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent}
-.btn:focus-visible,esp-web-install-button button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
-.hero-img{border-radius:18px;overflow:hidden;border:1px solid var(--line);aspect-ratio:16/10;max-width:100%}
-.hero-img img{width:100%;height:100%;object-fit:cover}
+.hero{padding-block:56px 0;text-align:center}
+.hero h1{font-size:clamp(52px,10vw,120px);line-height:.92}
+.hero .sub{font-size:clamp(19px,2.4vw,24px);color:var(--muted);margin-top:14px}
+.hero .soon{margin-top:18px;font-size:15px;color:var(--muted)}
+.hero .soon b{color:var(--fg);font-weight:500}
+.hero-photo{margin-top:40px}
+.hero-photo img{width:100%;max-height:640px;object-fit:cover}
 
-/* readout strip */
-.readout{display:grid;grid-template-columns:repeat(5,1fr);background:var(--screen);color:var(--screen-fg);border-radius:16px;overflow:hidden}
-.readout div{padding:16px 18px;border-right:1px solid rgba(255,255,255,.08);display:grid;gap:2px}
-.readout div:last-child{border-right:0}
-.readout b{font:600 clamp(24px,3.4vw,32px)/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
-.readout b small{font-size:.5em;margin-left:3px;opacity:.75}
-.readout span{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#93a3b8}
-.readout .v b{color:#2ee6a8}.readout .a b{color:#ffc24c}.readout .w b{color:#ff5fa8}.readout .f b{color:#8fb4ff}
+.block{padding-block:88px}
+.block.alt{background:var(--alt)}
+.lead{font-size:clamp(19px,2.2vw,22px);color:var(--muted);margin-top:16px;max-width:60ch}
 
-/* flow */
-.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:st}
-.flow div{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:8px;align-content:start}
-.flow div::before{counter-increment:st;content:"Stufe " counter(st);font:600 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--volt)}
-.flow p{color:var(--muted);font-size:15px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px}
+.pair figure,.single figure{margin:0}
+.pair img{width:100%;aspect-ratio:1/1;object-fit:cover}
+figcaption{font-size:15px;color:var(--muted);margin-top:12px}
 
-/* features */
-.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.feat div{background:var(--panel);padding:18px 20px;display:grid;gap:6px;align-content:start}
-.feat p{color:var(--muted);font-size:15px}
-.tag{justify-self:start;font:600 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:4px 9px;background:var(--chip);color:var(--muted)}
-.tag.soon{color:var(--amp)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.split img{width:100%}
 
-/* display */
-.screens{display:grid;grid-template-columns:auto 1fr;gap:36px;align-items:center}
-.screen-row{display:flex;gap:14px;flex-wrap:wrap}
-.screen-row img{width:150px;border-radius:10px;border:6px solid #1b2129;background:#0b0f14;image-rendering:pixelated}
+.list{margin:40px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:28px 56px}
+.list li{border-top:1px solid var(--line);padding-top:16px}
+.list b{display:block;font:700 18px var(--f-head);margin-bottom:4px}
+.list span{color:var(--muted);font-size:16px}
 
-/* gallery */
-.gal{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
-.gal figure{margin:0;display:grid;gap:6px;grid-column:span 2}
-.gal figure.w3{grid-column:span 3}
-.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
-.gal figure.wide img{aspect-ratio:16/9}
-.gal figcaption{font-size:13.5px;color:var(--muted)}
+.screens{display:grid;grid-template-columns:2.4fr 1fr;gap:24px;align-items:end;margin-top:48px}
+.screens .tft{display:flex;gap:16px;justify-content:center}
+.screens .tft img{width:46%;max-width:160px;border-radius:6px;background:#0b0f14}
 
-/* kickstarter */
-.ks-box{background:var(--screen);color:var(--screen-fg);border-radius:18px;padding:28px 30px;display:grid;grid-template-columns:1.2fr 1fr;gap:28px}
-.ks-box h2{color:#fff}
-.ks-box p{color:#b8c4d4}
-.ks-box ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
-.ks-box li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline;color:#dbe4ef;font-size:15px}
-.ks-box li::before{content:"";width:8px;height:8px;border-radius:2px;background:#ffc24c;transform:translateY(-1px)}
+table{width:100%;border-collapse:collapse;margin-top:36px;font-size:16px}
+th,td{text-align:left;vertical-align:top;padding:14px 0;border-top:1px solid var(--line)}
+th{width:32%;font-weight:500;color:var(--muted);padding-right:24px}
+tr:last-child th,tr:last-child td{border-bottom:1px solid var(--line)}
+.tbl{overflow-x:auto}
 
-/* firmware */
-.cards{display:grid;gap:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;grid-template-columns:1fr auto;gap:6px 18px;align-items:center}
-.card h3{font-weight:700}
-.card .meta{font:500 12.5px var(--f-mono);color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
-.chip{background:var(--chip);border-radius:6px;padding:4px 9px}
-.card p{grid-column:1/-1;color:var(--muted);font-size:14.5px}
-.card .act{grid-row:1/3;grid-column:2}
-esp-web-install-button button{font:600 14px var(--f-body);background:var(--accent);color:var(--accent-fg);border:0;border-radius:10px;padding:10px 20px;cursor:pointer}
-.note{border:1px solid color-mix(in srgb,var(--amp) 45%,var(--line));padding:12px 16px;background:var(--panel);border-radius:12px;margin-bottom:14px}
-.note b{color:var(--amp)}
-.help{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:10px}
-.help ol{margin:0;padding-left:20px;display:grid;gap:6px;font-size:15px}
-code{font:500 13.5px var(--f-mono);background:var(--chip);border-radius:5px;padding:1px 5px}
+.ks{text-align:center}
+.ks p{max-width:56ch;margin:16px auto 0;color:var(--muted)}
 
-footer{border-top:1px solid var(--line);padding-block:28px;color:var(--muted);font-size:14px}
-footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+.fw{margin-top:36px;border-top:1px solid var(--line)}
+.fw-row{display:grid;grid-template-columns:1fr auto;gap:4px 24px;align-items:center;padding:22px 0;border-bottom:1px solid var(--line)}
+.fw-row b{font:700 19px var(--f-head)}
+.fw-row span{color:var(--muted);font-size:15px;grid-column:1}
+.fw-row .act{grid-row:1/3;grid-column:2}
+esp-web-install-button button{font:500 15px var(--f-body);background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;padding:10px 22px;cursor:pointer}
+.small{font-size:15px;color:var(--muted);margin-top:24px}
+.small li{margin-bottom:6px}
+code{font:14px ui-monospace,Consolas,monospace}
 
-@media (max-width:860px){
-  .hero-top,.screens,.ks-box{grid-template-columns:1fr}
-  .readout{grid-template-columns:repeat(2,1fr)}
-  .readout div{border-bottom:1px solid rgba(255,255,255,.08)}
-  .flow,.feat{grid-template-columns:1fr}
-  .gal{grid-template-columns:1fr 1fr}
-  .gal figure,.gal figure.w3{grid-column:span 1}
+footer{border-top:1px solid var(--line);padding-block:32px;font-size:14px;color:var(--muted)}
+footer .w{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:820px){
+  .pair,.split,.list,.screens{grid-template-columns:1fr}
+  .split{gap:32px}
+  .block{padding-block:64px}
+  header nav{gap:16px}
 }
-@media (max-width:520px){
-  .gal{grid-template-columns:1fr}
-  .card{grid-template-columns:1fr}.card .act{grid-row:auto;grid-column:1}
-  nav a.nl{display:none}
+@media (max-width:480px){
+  header nav a.opt{display:none}
+  .fw-row{grid-template-columns:1fr}.fw-row .act{grid-row:auto;grid-column:1;margin-top:10px}
+  th{width:40%}
 }
 </style>
 </head>
 <body>
-<nav aria-label="Seite">
-  <div class="wrap">
-    <a class="brand" href="#top">PD<span>48</span>V</a>
-    <a class="nl" href="#funktionen">Funktionen</a>
-    <a class="nl" href="#galerie">Galerie</a>
-    <a class="nl" href="#kickstarter">Kickstarter</a>
-    <a class="btn primary" href="#firmware">Firmware flashen</a>
+<header>
+  <div class="w">
+    <a class="mark" href="#">PD48V</a>
+    <nav aria-label="Seite">
+      <a class="opt" href="#geraet">Gerät</a>
+      <a class="opt" href="#daten">Technische Daten</a>
+      <a href="#firmware">Firmware</a>
+    </nav>
   </div>
-</nav>
+</header>
 
-<main id="top">
-  <div class="wrap hero">
-    <div class="hero-top">
+<main>
+  <section class="hero">
+    <div class="w">
+      <h1>PD48V</h1>
+      <p class="sub">Ein Labornetzteil, das seinen Strom aus einem USB-C-Ladegerät bekommt.</p>
+      <p class="soon"><b>Bald auf Kickstarter.</b> Die Kampagne ist in Vorbereitung.</p>
+    </div>
+    <div class="hero-photo"><img src="img/hero.jpg" alt="PD48V im orangen Gehäuse mit Farbdisplay, Drehknopf und Buchsen, am USB-C-Kabel" width="1600" height="688"></div>
+  </section>
+
+  <section class="block" id="geraet">
+    <div class="w">
+      <h2>Ein Kabel statt Netzteil.</h2>
+      <p class="lead">Ladegerät mit USB-C anstecken, Spannung und Strom am Drehknopf einstellen, fertig. Mit einem Ladegerät nach USB PD 3.1
+        liefert das PD48V bis zu 240 Watt, ohne Trafo und ohne Lüfter.</p>
+      <div class="pair">
+        <figure><img src="img/rot.jpg" alt="PD48V im roten Gehäuse" loading="lazy" width="1544" height="1316"><figcaption>Rotes Gehäuse mit Drehknopf und 4-mm-Buchsen.</figcaption></figure>
+        <figure><img src="img/grau.jpg" alt="PD48V in grau, geöffnet" loading="lazy" width="1501" height="1279"><figcaption>Graue Version, geöffnet.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="block alt">
+    <div class="w split">
+      <img src="img/drossel.jpg" alt="Speicherdrossel und Display im Inneren" loading="lazy" width="968" height="847">
       <div>
-        <h1>PD48V<br><b>240 W</b> aus USB-C.</h1>
-        <p class="lead">Ein Labornetzteil, das seine Energie aus einem USB-C-Ladegerät zieht. Mit einem Netzteil nach USB PD 3.1 (EPR)
-          liegen am Eingang bis zu 48 V und 5 A an. Eine GaN-Buckstufe macht daraus eine einstellbare Spannung, geregelt nach Spannung und Strom.
-          Ohne Netztrafo, ohne Lüfter.</p>
-        <div class="ks"><i aria-hidden="true"></i>Kickstarter-Kampagne in Vorbereitung</div>
-        <div class="cta">
-          <a class="btn primary" href="#firmware">Firmware flashen</a>
-          <a class="btn" href="#galerie">Bilder ansehen</a>
-        </div>
-      </div>
-      <div class="hero-img"><img src="img/hero.jpg" alt="PD48V im orangen Gehäuse mit Farbdisplay, Drehgeber und 4-mm-Buchsen, am USB-C-Kabel" width="1600" height="688"></div>
-    </div>
-
-    <div class="readout" role="list" aria-label="Kenndaten">
-      <div class="w" role="listitem"><b>240<small>W</small></b><span>Dauerleistung</span></div>
-      <div class="v" role="listitem"><b>0–47<small>V</small></b><span>Ausgang</span></div>
-      <div class="a" role="listitem"><b>10<small>A</small></b><span>Auslegung</span></div>
-      <div class="f" role="listitem"><b>250<small>kHz</small></b><span>GaN-Halbbrücke</span></div>
-      <div class="v" role="listitem"><b>20<small>kHz</small></b><span>Regeltakt</span></div>
-    </div>
-  </div>
-
-  <section>
-    <div class="wrap">
-      <div class="sec-head">
-        <div class="eyebrow">Aufbau</div>
-        <h2>Vom Ladegerät bis zur Klemme</h2>
-        <p>Das Gerät verhandelt mit dem Netzteil selbst die passende Spannung und regelt den Ausgang auf den Sollwert.</p>
-      </div>
-      <div class="flow">
-        <div><h3>USB-C PD 3.1</h3><p>Der HUSB238A handelt mit dem Netzteil aus: fest 5 bis 20 V, EPR 28, 36 und 48 V, dazu PPS, AVS und EPR-AVS. Die Firmware wählt beim Einstellen selbst das passende Profil.</p></div>
-        <div><h3>GaN-Buck</h3><p>Synchroner Abwärtswandler mit der GaN-Halbbrücke LMG5200 bei 250 kHz, einer 22-µH-Speicherdrossel und einer Bank aus Keramikkondensatoren.</p></div>
-        <div><h3>Messen und Regeln</h3><p>Der INA228 misst Spannung und Strom mit 20 bit am 10-mΩ-Shunt. Der ESP32-S3 regelt mit 20 kHz nach Spannung (CV) und Strom (CC).</p></div>
+        <h2>Klein, aber für 10 A gebaut.</h2>
+        <p class="lead">Eine GaN-Halbbrücke schaltet mit 250 kHz, eine große Speicherdrossel glättet. Die Regelung misst Spannung und Strom
+          20&nbsp;000-mal pro Sekunde nach. Wärme geht über die Bodenplatte aus Aluminium.</p>
       </div>
     </div>
   </section>
 
-  <section id="funktionen">
-    <div class="wrap">
-      <div class="sec-head">
-        <div class="eyebrow">Funktionen</div>
-        <h2>Mehr als Spannung und Strom</h2>
-      </div>
-      <div class="feat">
-        <div><span class="tag">Netzteil</span><h3>CV und CC</h3><p>Spannung und Strombegrenzung per Drehgeber, Tasten oder Browser. Der Ausgang fährt über eine Rampe hoch und wird beim Abschalten aktiv auf 0 V gezogen.</p></div>
-        <div><span class="tag">Schutz</span><h3>Kurzschluss und Überspannung</h3><p>Eine Hardware-Strombremse im INA228 greift ohne Software. Kurzschluss, Überspannung und ein Wechsel der USB-C-Spannung im Betrieb werden erkannt.</p></div>
-        <div><span class="tag">Bedienung</span><h3>Weboberfläche</h3><p>Live-Messwerte, Aufzeichnung mit Detailansicht und Presets. Über das eigene WLAN des Geräts oder einen USB-Dongle am Computer.</p></div>
-        <div><span class="tag">Messen</span><h3>Kennlinientest</h3><p>Fährt die Spannung automatisch von 0 V bis zum Sollwert und zurück und zeichnet die Kurve live auf.</p></div>
-        <div><span class="tag">Messen</span><h3>Dioden- und Kondensatortest</h3><p>Durchlassspannung bei 1 mA, I-U-Kennlinie, Kapazität aus der Ladekurve.</p></div>
-        <div><span class="tag">Werkzeug</span><h3>USB-C-Tester und Akku-Laden</h3><p>Zeigt, was ein Netzteil wirklich anbietet, und lädt Akkus nach Profil.</p></div>
-        <div><span class="tag soon">In Arbeit</span><h3>Verbund</h3><p>Mehrere Geräte an einem Dongle. In Reihe für höhere Spannung, parallel für mehr Strom.</p></div>
-        <div><span class="tag">Anzeige</span><h3>Farbdisplay</h3><p>ST7789-Display quer oder hochkant, oder das kleine OLED. Einstellungen direkt am Gerät.</p></div>
-        <div><span class="tag">Firmware</span><h3>Updates</h3><p>Per USB direkt aus dieser Seite oder kabellos über den Dongle, mit automatischer Rückkehr zur alten Version, falls die neue nicht startet.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap screens">
-      <div class="screen-row">
-        <img src="img/tft-run.png" alt="Display hochkant im Betrieb: 12,004 V, 1,250 A, 15 W mit Verlauf" width="270" height="480" loading="lazy">
-        <img src="img/tft-setup.png" alt="Display hochkant: Einstellungen mit Start-Spannung 12,00 V" width="270" height="480" loading="lazy">
-        <img src="img/tft-usb.png" alt="Display hochkant: USB-C-Tester mit Angeboten des Netzteils" width="270" height="480" loading="lazy">
-      </div>
-      <div class="sec-head" style="margin:0">
-        <div class="eyebrow">Am Gerät</div>
-        <h2>Ein Blick, alle Werte</h2>
-        <p>Spannung in Grün, Strom in Gelb, Leistung in Pink, mit Verlauf der letzten Sekunden. Im Hochformat stehen Name und Wert sauber untereinander,
-          im Querformat nebeneinander. Bedient wird mit Drehgeber und zwei Tasten.</p>
-      </div>
-    </div>
-  </section>
-
-  <section id="galerie">
-    <div class="wrap">
-      <div class="sec-head">
-        <div class="eyebrow">Galerie</div>
-        <h2>So sieht V1 aus</h2>
-      </div>
-      <div class="gal">
-        <figure><img src="img/rot.jpg" alt="PD48V im roten Gehäuse von oben" loading="lazy"><figcaption>Rotes Gehäuse mit Drehgeber und 4-mm-Buchsen</figcaption></figure>
-        <figure><img src="img/grau.jpg" alt="PD48V in grauer Variante, geöffnet" loading="lazy"><figcaption>Graue Variante, offen</figcaption></figure>
-        <figure><img src="img/alu.jpg" alt="Aluminium-Bodenplatte des PD48V" loading="lazy"><figcaption>Alu-Bodenplatte zur Wärmeabfuhr</figcaption></figure>
-        <figure class="w3"><img src="img/drossel.jpg" alt="Speicherdrossel neben dem OLED-Display" loading="lazy"><figcaption>Die 22-µH-Drossel am Schaltknoten</figcaption></figure>
-        <figure class="w3 wide"><img src="img/layout.jpg" alt="Leiterplattenlayout in KiCad, 6 Lagen" loading="lazy"><figcaption>Layout in KiCad, 6 Lagen, etwa 62 mm</figcaption></figure>
-        <figure class="w3 wide"><img src="img/web-basic.jpg" alt="Weboberfläche: Spannung und Strom einstellen" loading="lazy"><figcaption>Weboberfläche: Sollwerte und Live-Messung</figcaption></figure>
-        <figure class="w3 wide"><img src="img/web-autotest.jpg" alt="Weboberfläche: automatischer Kennlinientest" loading="lazy"><figcaption>Kennlinientest mit Sollverlauf</figcaption></figure>
-        <figure class="w3 wide"><img src="img/web-usbc.jpg" alt="Weboberfläche: USB-C-Tester" loading="lazy"><figcaption>USB-C-Tester: Angebote des Netzteils</figcaption></figure>
-        <figure class="w3 wide"><img src="img/web-diode.jpg" alt="Weboberfläche: Diodentest mit Kennlinie" loading="lazy"><figcaption>Diodentest mit I-U-Kennlinie</figcaption></figure>
-      </div>
-    </div>
-  </section>
-
-  <section id="kickstarter">
-    <div class="wrap ks-box">
-      <div style="display:grid;gap:14px;align-content:start">
-        <div class="eyebrow" style="color:#ffc24c">Bald auf Kickstarter</div>
-        <h2>Die Kampagne ist in Vorbereitung</h2>
-        <p>V1 ist aufgebaut, steckt im Gehäuse und ist regelmäßig im Einsatz, auch mit 240 W im Dauerbetrieb. Bevor die Kampagne startet,
-          wird die Hardware für die Serie überarbeitet. Termin und Preise stehen noch nicht fest.</p>
-      </div>
-      <ul>
-        <li>Erprobt: PD-Aushandlung von 5 bis 48 V, Regelung ab 0,1 V, Abschalten bei hartem Kurzschluss</li>
-        <li>Neu in der Firmware: Eingangswächter gegen Spannungssprünge der Quelle</li>
-        <li>Für V2 geplant: echte Messung der Eingangsspannung und eine Klemme am Ausgang</li>
-        <li>In Arbeit: Verbund aus mehreren Geräten an einem Dongle</li>
+  <section class="block">
+    <div class="w">
+      <h2>Was es kann.</h2>
+      <ul class="list">
+        <li><b>Spannung und Strom</b><span>Von 0 bis 47 V, mit einstellbarer Strombegrenzung.</span></li>
+        <li><b>Passt sich dem Ladegerät an</b><span>Wählt selbst das passende Profil, von 5 bis 48 V.</span></li>
+        <li><b>Schützt sich und die Schaltung</b><span>Schaltet bei Kurzschluss und Überspannung sofort ab.</span></li>
+        <li><b>Im Browser bedienen</b><span>Messwerte live, mit Aufzeichnung, über WLAN oder einen USB-Stick.</span></li>
+        <li><b>Messen und testen</b><span>Kennlinien, Dioden, Kondensatoren, Akkus laden.</span></li>
+        <li><b>Ladegeräte prüfen</b><span>Zeigt, was ein USB-C-Ladegerät wirklich liefert.</span></li>
       </ul>
     </div>
   </section>
 
-  <section id="firmware">
-    <div class="wrap">
-      <div class="sec-head">
-        <div class="eyebrow">Firmware 2026-11-20</div>
-        <h2>Firmware flashen</h2>
-        <p>Gerät per USB-C an den Computer, den passenden Knopf drücken und den Port wählen. Sollwerte, Einstellungen und WLAN-Kopplung bleiben erhalten.</p>
+  <section class="block alt">
+    <div class="w">
+      <h2>Am Gerät und am Computer.</h2>
+      <p class="lead">Alle Werte auf dem Display am Gerät. Wer mehr will, öffnet die Oberfläche im Browser.</p>
+      <div class="screens">
+        <img src="img/web-basic.jpg" alt="Bedienoberfläche im Browser mit Sollwerten und Messung" loading="lazy" width="1562" height="882">
+        <div class="tft">
+          <img src="img/tft-run.png" alt="Display am Gerät im Betrieb" loading="lazy" width="270" height="480">
+          <img src="img/tft-setup.png" alt="Einstellungen am Gerät" loading="lazy" width="270" height="480">
+        </div>
       </div>
-      <div class="note"><b>Nur Chrome oder Edge am Computer.</b> Safari, Firefox und Handys können kein Web Serial. Vorher den Ausgang ausschalten.</div>
-      <div class="cards">
-        <article class="card">
-          <h3>Board mit PSRAM</h3>
-          <div class="meta"><span class="chip">ESP32-S3 N16R8 / S3R8</span><span class="chip">Farbdisplay + OLED</span></div>
+    </div>
+  </section>
+
+  <section class="block" id="daten">
+    <div class="w narrow">
+      <h2>Technische Daten.</h2>
+      <div class="tbl"><table>
+        <tr><th>Eingang</th><td>USB-C, USB PD 3.1 bis 48 V / 5 A (fest, EPR, PPS, AVS)</td></tr>
+        <tr><th>Leistung</th><td>240 W im Dauerbetrieb</td></tr>
+        <tr><th>Ausgang</th><td>0 bis 47 V, Strombegrenzung einstellbar, ausgelegt für 10 A</td></tr>
+        <tr><th>Wandler</th><td>Synchroner Abwärtswandler, GaN-Halbbrücke LMG5200, 250 kHz</td></tr>
+        <tr><th>Regelung</th><td>ESP32-S3, 20 kHz</td></tr>
+        <tr><th>Messung</th><td>INA228, 20 bit, Shunt 10 mΩ</td></tr>
+        <tr><th>Bedienung</th><td>Farbdisplay oder OLED, Drehknopf, zwei Tasten, Browser über WLAN</td></tr>
+        <tr><th>Anschlüsse</th><td>4-mm-Buchsen</td></tr>
+      </table></div>
+    </div>
+  </section>
+
+  <section class="block alt ks">
+    <div class="w">
+      <h2>Bald auf Kickstarter.</h2>
+      <p>Die erste Version läuft und ist im Einsatz. Bis zur Kampagne wird die Hardware für die Serie überarbeitet.
+        Termin und Preis stehen noch nicht fest.</p>
+    </div>
+  </section>
+
+  <section class="block" id="firmware">
+    <div class="w narrow">
+      <h2>Firmware aktualisieren.</h2>
+      <p class="lead">Gerät per USB-C an den Computer anschließen, das passende Modell wählen und den Anschluss bestätigen.
+        Einstellungen bleiben erhalten. Funktioniert in Chrome und Edge am Computer.</p>
+      <div class="fw">
+        <div class="fw-row">
+          <b>PD48V mit PSRAM</b>
+          <span>Modul mit Aufdruck N16R8 oder Chip S3R8</span>
           <div class="act"><esp-web-install-button manifest="manifest-board-psram.json">
-            <button slot="activate">Flashen</button>
-            <span slot="unsupported">Browser ohne Web Serial</span>
+            <button slot="activate">Installieren</button>
+            <span slot="unsupported">Nur in Chrome oder Edge</span>
             <span slot="not-allowed">Nur über https</span>
           </esp-web-install-button></div>
-          <p>Für Module mit 8 MB PSRAM. Der Start-Log zeigt dann „Found 8MB PSRAM device“.</p>
-        </article>
-        <article class="card">
-          <h3>Board ohne PSRAM</h3>
-          <div class="meta"><span class="chip">ESP32-S3-WROOM-1-N16</span><span class="chip">240 MHz</span></div>
+        </div>
+        <div class="fw-row">
+          <b>PD48V ohne PSRAM</b>
+          <span>Modul mit Aufdruck N16</span>
           <div class="act"><esp-web-install-button manifest="manifest-board-n16.json">
-            <button slot="activate">Flashen</button>
-            <span slot="unsupported">Browser ohne Web Serial</span>
+            <button slot="activate">Installieren</button>
+            <span slot="unsupported">Nur in Chrome oder Edge</span>
             <span slot="not-allowed">Nur über https</span>
           </esp-web-install-button></div>
-          <p>Für Module mit Aufdruck „N16“ ohne „R8“. Die PSRAM-Version startet dort nicht.</p>
-        </article>
-        <article class="card">
-          <h3>WLAN-Dongle</h3>
-          <div class="meta"><span class="chip">ESP32-C3 Super Mini</span><span class="chip">Einzel + Verbund</span></div>
+        </div>
+        <div class="fw-row">
+          <b>USB-Stick für WLAN</b>
+          <span>Der kleine Stick für die Bedienung am Computer</span>
           <div class="act"><esp-web-install-button manifest="manifest-dongle-c3.json">
-            <button slot="activate">Flashen</button>
-            <span slot="unsupported">Browser ohne Web Serial</span>
+            <button slot="activate">Installieren</button>
+            <span slot="unsupported">Nur in Chrome oder Edge</span>
             <span slot="not-allowed">Nur über https</span>
           </esp-web-install-button></div>
-          <p>Der USB-Dongle für die Weboberfläche am Computer und für den Verbund. Die Kopplung bleibt gespeichert.</p>
-        </article>
+        </div>
       </div>
-      <div class="help">
-        <h3>Welches Board habe ich?</h3>
-        <ol>
-          <li>Aufdruck auf dem Metalldeckel des Moduls lesen: <code>N16R8</code> = mit PSRAM, <code>N16</code> = ohne.</li>
-          <li>Nicht lesbar: erst „Board mit PSRAM“ flashen. Startet es danach immer wieder neu, „Board ohne PSRAM“ flashen.</li>
-          <li>Port belegt: andere Programme am Port schließen, zum Beispiel ein serielles Terminal.</li>
-          <li>Board wird nicht erkannt: BOOT gedrückt halten, kurz RESET drücken, BOOT loslassen, dann nochmal flashen.</li>
-        </ol>
-      </div>
+      <ul class="small">
+        <li>Ausgang vorher ausschalten.</li>
+        <li>Unsicher, welches Modell? Erst „mit PSRAM“ installieren. Startet das Gerät danach immer wieder neu, „ohne PSRAM“ nehmen.</li>
+        <li>Wird das Gerät nicht gefunden: BOOT gedrückt halten, kurz RESET drücken, BOOT loslassen.</li>
+      </ul>
     </div>
   </section>
 </main>
 
 <footer>
-  <div class="wrap">
-    <span>PD48V · Stand V1 · November 2026</span>
-    <span class="mono">Firmware 2026-11-20</span>
+  <div class="w">
+    <span>PD48V · erste Version · 2026</span>
+    <span>Firmware vom 20.11.2026</span>
   </div>
 </footer>
 </body>
