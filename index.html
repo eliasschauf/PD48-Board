@@ -86,6 +86,18 @@ tr:last-child th,tr:last-child td{border-bottom:1px solid var(--line)}
 .fw-row span{color:var(--muted);font-size:15px;grid-column:1}
 .fw-row .act{grid-row:1/3;grid-column:2}
 esp-web-install-button button{font:500 15px var(--f-body);background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;padding:10px 22px;cursor:pointer}
+.auto{margin-top:32px;display:grid;gap:14px;justify-items:start}
+#go{font:500 17px var(--f-body);background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;padding:14px 28px;cursor:pointer}
+#go:disabled{opacity:.5;cursor:default}
+.st{font-size:16px;min-height:1.6em}
+.st.ok{color:var(--fg)}.st.err{color:var(--accent)}
+.bar{width:100%;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar div{height:100%;width:0;background:var(--accent);transition:width .2s}
+.log{width:100%;font-size:14px;color:var(--muted)}
+.log pre{max-height:220px;overflow:auto;white-space:pre-wrap;font:13px ui-monospace,Consolas,monospace;margin:8px 0 0}
+.manual{margin-top:40px}
+.manual summary{cursor:pointer;color:var(--muted);font-size:15px}
+.manual .fw{margin-top:16px}
 .small{font-size:15px;color:var(--muted);margin-top:24px}
 .small li{margin-bottom:6px}
 code{font:14px ui-monospace,Consolas,monospace}
@@ -206,9 +218,18 @@ footer .w{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <section class="block" id="firmware">
     <div class="w narrow">
       <h2>Firmware aktualisieren.</h2>
-      <p class="lead">Gerät per USB-C an den Computer anschließen, das passende Modell wählen und den Anschluss bestätigen.
-        Einstellungen bleiben erhalten. Funktioniert in Chrome und Edge am Computer.</p>
-      <div class="fw">
+      <p class="lead">Gerät per USB-C an den Computer anschließen und auf „Verbinden und installieren“ klicken. Die Seite erkennt,
+        welches Modell angeschlossen ist, und spielt die passende Firmware auf. Einstellungen bleiben erhalten.
+        Funktioniert in Chrome und Edge am Computer.</p>
+      <div class="auto" id="auto">
+        <button id="go" type="button">Verbinden und installieren</button>
+        <p class="st" id="st" aria-live="polite">Bereit.</p>
+        <div class="bar" id="bar" hidden><div id="barFill"></div></div>
+        <details class="log"><summary>Protokoll</summary><pre id="log"></pre></details>
+      </div>
+      <details class="manual">
+        <summary>Modell selbst wählen</summary>
+        <div class="fw">
         <div class="fw-row">
           <b>PD48V mit PSRAM</b>
           <span>Modul mit Aufdruck N16R8 oder Chip S3R8</span>
@@ -237,6 +258,7 @@ footer .w{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           </esp-web-install-button></div>
         </div>
       </div>
+      </details>
       <ul class="small">
         <li>Ausgang vorher ausschalten.</li>
         <li>Unsicher, welches Modell? Erst „mit PSRAM“ installieren. Startet das Gerät danach immer wieder neu, „ohne PSRAM“ nehmen.</li>
@@ -252,5 +274,90 @@ footer .w{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <span>Firmware vom 20.11.2026</span>
   </div>
 </footer>
+<script type="module">
+/* Auto flasher (esptool-js 0.5.4): connect, read the chip and its eFuse
+   features, pick the firmware, write it at the same offsets as the manifests
+   (NVS at 0x9000 is never written). An S3 with "Embedded PSRAM" (ESP32-S3R8,
+   inside WROOM-1-N16R8) gets the PSRAM build, any other S3 the N16 build: a
+   wrong guess can only be N16 firmware on a PSRAM board, which still runs. */
+import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.5.4/bundle.js";
+
+const BUILDS = {
+  psram:  { name: "PD48V mit PSRAM",   dir: "fw/board-psram", parts: [["bootloader.bin", 0x0], ["partitions.bin", 0x8000], ["ota_data_initial.bin", 0x10000], ["firmware.bin", 0x20000]] },
+  n16:    { name: "PD48V ohne PSRAM",  dir: "fw/board-n16",   parts: [["bootloader.bin", 0x0], ["partitions.bin", 0x8000], ["ota_data_initial.bin", 0x10000], ["firmware.bin", 0x20000]] },
+  dongle: { name: "USB-Stick für WLAN", dir: "fw/dongle-c3",  parts: [["bootloader.bin", 0x0], ["partitions.bin", 0x8000], ["firmware.bin", 0x10000]] },
+};
+const $ = (id) => document.getElementById(id);
+const logEl = $("log");
+const log = (t) => { logEl.textContent += t + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+const term = { clean() { logEl.textContent = ""; }, writeLine: log, write: (t) => { logEl.textContent += t; } };
+function status(t, cls) { const e = $("st"); e.textContent = t; e.className = "st" + (cls ? " " + cls : ""); }
+function progress(f) { $("bar").hidden = f < 0; $("barFill").style.width = Math.max(0, Math.min(100, f * 100)) + "%"; }
+
+export function pickBuild(chipName, features) {
+  const n = (chipName || "").toUpperCase();
+  if (n.includes("ESP32-C3")) return "dongle";
+  if (n.includes("ESP32-S3")) return (features || []).some((f) => /PSRAM/i.test(f)) ? "psram" : "n16";
+  return null;
+}
+
+async function fetchBstr(url) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(url + ": HTTP " + r.status);
+  const u = new Uint8Array(await r.arrayBuffer());
+  let s = "";
+  for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return s;
+}
+
+if (!("serial" in navigator)) {
+  $("go").disabled = true;
+  status("Dieser Browser kann nicht flashen. Bitte Chrome oder Edge am Computer verwenden.", "err");
+}
+
+$("go").addEventListener("click", async () => {
+  let transport = null;
+  $("go").disabled = true;
+  term.clean();
+  progress(-1);
+  try {
+    status("Anschluss wählen …");
+    const port = await navigator.serial.requestPort();
+    transport = new Transport(port, true);
+    const loader = new ESPLoader({ transport, baudrate: 921600, romBaudrate: 115200, terminal: term });
+    status("Verbinde und lese den Chip …");
+    const desc = await loader.main();
+    const features = await loader.chip.getChipFeatures(loader);
+    const key = pickBuild(loader.chip.CHIP_NAME, features);
+    if (!key) throw new Error("Unbekannter Chip: " + desc + ". Das ist kein PD48V oder USB-Stick.");
+    const b = BUILDS[key];
+    status("Erkannt: " + loader.chip.CHIP_NAME + (key === "psram" ? " mit PSRAM" : key === "n16" ? " ohne PSRAM" : "") + ". Installiere " + b.name + " …");
+    const files = [];
+    for (const [f, addr] of b.parts) files.push({ data: await fetchBstr(b.dir + "/" + f), address: addr });
+    const total = files.reduce((a, f) => a + f.data.length, 0);
+    let before = 0, cur = -1;
+    progress(0);
+    await loader.writeFlash({
+      fileArray: files, flashSize: "keep", flashMode: "keep", flashFreq: "keep", eraseAll: false, compress: true,
+      reportProgress: (i, written, size) => {
+        if (i !== cur) { if (cur >= 0) before += files[cur].data.length; cur = i; }
+        progress((before + files[i].data.length * (size ? written / size : 0)) / total);
+      },
+    });
+    progress(1);
+    await loader.after("hard_reset");
+    status("Fertig: " + b.name + " ist installiert. Das Gerät startet neu.", "ok");
+  } catch (e) {
+    const msg = String(e && e.message || e);
+    if (/No port selected|NotFoundError/i.test(msg)) status("Kein Anschluss gewählt.", "err");
+    else if (/open|busy|NetworkError|InvalidState/i.test(msg)) status("Anschluss belegt. Andere Programme am Gerät schließen und nochmal versuchen.", "err");
+    else status("Fehler: " + msg + " Tipp: BOOT halten, RESET drücken, BOOT loslassen, nochmal versuchen.", "err");
+    log("FEHLER: " + msg);
+  } finally {
+    try { if (transport) await transport.disconnect(); } catch (_) {}
+    $("go").disabled = !("serial" in navigator);
+  }
+});
+</script>
 </body>
 </html>
