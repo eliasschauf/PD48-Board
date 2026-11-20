@@ -1,0 +1,16 @@
+{
+  "name": "PD48V Board mit PSRAM (N16R8 / S3R8)",
+  "version": "2026-11-20",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "fw/board-psram/bootloader.bin", "offset": 0 },
+        { "path": "fw/board-psram/partitions.bin", "offset": 32768 },
+        { "path": "fw/board-psram/ota_data_initial.bin", "offset": 65536 },
+        { "path": "fw/board-psram/firmware.bin", "offset": 131072 }
+      ]
+    }
+  ]
+}
