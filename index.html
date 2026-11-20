@@ -9,7 +9,7 @@
      Firmware parts and offsets: manifest-*.json, files in fw/. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
 <script type="module" src="https://unpkg.com/esp-web-tools@10.1.0/dist/web/install-button.js?module"></script>
 <style>
 /* layout: instrument front panel. Hero photo, a readout strip in the display's own
@@ -18,7 +18,7 @@
   --bg:#f2f4f3; --panel:#ffffff; --fg:#121b17; --muted:#56645d; --line:#d5ddd9;
   --volt:#0a8f63; --amp:#b07400; --watt:#c2347a; --accent:#0a8f63; --accent-fg:#ffffff; --chip:#e5ede9;
   --screen:#0b0f14; --screen-fg:#e8eefc;
-  --f-display:"Space Grotesk",system-ui,sans-serif;
+  --f-display:"Chakra Petch",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
 }
@@ -76,7 +76,7 @@ nav a.nl:hover{color:var(--fg)}
 .readout div:last-child{border-right:0}
 .readout b{font:600 clamp(24px,3.4vw,32px)/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
 .readout b small{font-size:.5em;margin-left:3px;opacity:.75}
-.readout span{font:500 11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#93a3b8}
+.readout span{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#93a3b8}
 .readout .v b{color:#2ee6a8}.readout .a b{color:#ffc24c}.readout .w b{color:#ff5fa8}.readout .f b{color:#8fb4ff}
 
 /* flow */
@@ -89,7 +89,7 @@ nav a.nl:hover{color:var(--fg)}
 .feat{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .feat div{background:var(--panel);padding:18px 20px;display:grid;gap:6px;align-content:start}
 .feat p{color:var(--muted);font-size:15px}
-.tag{justify-self:start;font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:2px 7px;background:var(--chip);color:var(--muted)}
+.tag{justify-self:start;font:600 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:4px 9px;background:var(--chip);color:var(--muted)}
 .tag.soon{color:var(--amp)}
 
 /* display */
@@ -118,11 +118,11 @@ nav a.nl:hover{color:var(--fg)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;grid-template-columns:1fr auto;gap:6px 18px;align-items:center}
 .card h3{font-weight:700}
 .card .meta{font:500 12.5px var(--f-mono);color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
-.chip{background:var(--chip);border-radius:6px;padding:2px 7px}
+.chip{background:var(--chip);border-radius:6px;padding:4px 9px}
 .card p{grid-column:1/-1;color:var(--muted);font-size:14.5px}
 .card .act{grid-row:1/3;grid-column:2}
 esp-web-install-button button{font:600 14px var(--f-body);background:var(--accent);color:var(--accent-fg);border:0;border-radius:10px;padding:10px 20px;cursor:pointer}
-.note{border-left:3px solid var(--amp);padding:10px 14px;background:var(--panel);border-radius:0 10px 10px 0;margin-bottom:14px}
+.note{border:1px solid color-mix(in srgb,var(--amp) 45%,var(--line));padding:12px 16px;background:var(--panel);border-radius:12px;margin-bottom:14px}
 .note b{color:var(--amp)}
 .help{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:10px}
 .help ol{margin:0;padding-left:20px;display:grid;gap:6px;font-size:15px}
@@ -161,7 +161,6 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
   <div class="wrap hero">
     <div class="hero-top">
       <div>
-        <div class="eyebrow">USB-C Labornetzteil · V1 läuft</div>
         <h1>PD48V<br><b>240 W</b> aus USB-C.</h1>
         <p class="lead">Ein Labornetzteil, das seine Energie aus einem USB-C-Ladegerät zieht. Mit einem Netzteil nach USB PD 3.1 (EPR)
           liegen am Eingang bis zu 48 V und 5 A an. Eine GaN-Buckstufe macht daraus eine einstellbare Spannung, geregelt nach Spannung und Strom.
