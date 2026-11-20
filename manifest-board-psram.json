@@ -1,6 +1,6 @@
 {
   "name": "PD48V Board mit PSRAM (N16R8 / S3R8)",
-  "version": "2026-11-20",
+  "version": "2026-11-20b",
   "new_install_prompt_erase": false,
   "builds": [
     {

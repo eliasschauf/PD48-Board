@@ -1,6 +1,6 @@
 {
   "name": "PD48V Board ohne PSRAM (WROOM-1-N16)",
-  "version": "2026-11-20",
+  "version": "2026-11-20b",
   "new_install_prompt_erase": false,
   "builds": [
     {
